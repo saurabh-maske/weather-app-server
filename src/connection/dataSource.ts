@@ -1,5 +1,6 @@
 import {DataSource,DataSourceOptions} from "typeorm"
 import {config} from 'dotenv'
+import { Location } from "src/modules/locations/entity/location.entity";
 config();
 
 export const datasourceOptions: DataSourceOptions = {
@@ -10,7 +11,7 @@ export const datasourceOptions: DataSourceOptions = {
     username : process.env.POSTGRES_USER,
     password : process.env.POSTGRES_PASSWORD,
     database : process.env.DATABASE_NAME,
-    entities : ['dist/**/*.entity{.ts, .js}'],
+    entities : [Location],
     synchronize: true,
     ssl: false
 }
