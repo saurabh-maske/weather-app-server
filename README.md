@@ -45,6 +45,10 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Swagger UI
+
+`The application uses Swagger UI Express for API documentation. You can access the Swagger UI by navigating to http://localhost:3000/api in your web browser. `
+
 ## Test
 
 ```bash
