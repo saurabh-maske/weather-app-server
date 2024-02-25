@@ -1,16 +1,35 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, UseGuards } from '@nestjs/common';
 import axios from 'axios';
 import { error } from 'console';
+import { RedisService } from './redis/redis.service';
+import { ThrottlerGuard } from 'nestjs-throttler';
+import { Logger } from '@nestjs/common';
+
 
 @Injectable()
 export class WeatherApiService {
+  private readonly logger = new Logger(WeatherApiService.name);
+
+  constructor(private readonly redisService: RedisService) {}
+
+  @UseGuards(ThrottlerGuard)
   async getWeatherData(lat: string, lon: string) {
-    const url = `${process.env.WEATHER_API}?lat=${lat}&lon=${lon}&appid=${process.env.API_KEY}`;
+    const url = `${process.env.WEATHER_API}?lat=${lat}&lon=${lon}&appid=${process.env.API_KEY}&units=metric`;
+    const cacheKey = `weather-${lat}-${lon}`;
+    const cachedData = await this.redisService.get(cacheKey);
+
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
     try {
       if (lat && lon) {
+        this.logger.log(`Fetching weather data for lat: ${lat}, lon: ${lon}`);
         const response = await axios.get(url);
         if (response.status === 200) {
-          return response.data;
+          this.logger.log(`Weather data fetched successfully for lat: ${lat}, lon: ${lon}`);
+          const data = response.data;
+          await this.redisService.set(cacheKey, JSON.stringify(data), 60 * 60); // Cache for  1 hour
+          return data;
         } else {
           throw new HttpException(
             'Failed to fetch weather data',
@@ -26,13 +45,11 @@ export class WeatherApiService {
         if ((error.response.status = 400)) {
           throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
         } else if (error.request) {
-          // The request was made but no response was received
           throw new HttpException(
             'No response received from the server',
             HttpStatus.SERVICE_UNAVAILABLE,
           );
         } else {
-          // Something happened in setting up the request that triggered an Error
           throw new HttpException(
             'Error setting up the request',
             HttpStatus.INTERNAL_SERVER_ERROR,
@@ -45,6 +62,31 @@ export class WeatherApiService {
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
+    }
+  }
+
+  @UseGuards(ThrottlerGuard)
+  async getHistory(lat: string, lon: string, start: string, end: string) {
+    const cacheKey = `weather-${lat}-${lon}`;
+    const cachedData = await this.redisService.get(cacheKey);
+
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+    try {
+      const url = `${process.env.HISTORY_API}?lat=${lat}&lon=${lon}&type=hour&start=${start}&end=${end}&appid=${process.env.API_KEY}`;
+
+      const response = await axios.get(url);
+      if (response.status === 200) {
+        const data = response.data;
+        await this.redisService.set(cacheKey, JSON.stringify(data), 60 * 60); // Cache for  1 hour
+        return data;
+      }
+    } catch (error) {
+      throw new HttpException(
+        'Unauthorized to access resource , please check your API key',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
   }
 }

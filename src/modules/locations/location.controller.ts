@@ -15,7 +15,7 @@ import { LocationInputDto } from './dto/location.dto';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 
-@ApiTags('weather')
+@ApiTags('CURD-Locations')
 @Controller('locations')
 export class LocationController {
   constructor(private readonly locationService: LocationService) {}
@@ -37,10 +37,11 @@ export class LocationController {
           .json({ code: 200, message: 'location saved sucessfully', result });
       }
     } catch (error) {
-      throw new HttpException(
-        'Location could not be saved',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      if (error instanceof HttpException) {
+        res.status(error.getStatus()).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: 'Internal Server Error' });
+      }
     }
   }
 
@@ -56,10 +57,11 @@ export class LocationController {
         });
       }
     } catch (error) {
-      throw new HttpException(
-        'Location could not be saved',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      if (error instanceof HttpException) {
+        res.status(error.getStatus()).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: 'Internal Server Error' });
+      }
     }
   }
 
