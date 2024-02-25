@@ -1,12 +1,8 @@
-/*
-https://docs.nestjs.com/providers#services
-*/
-
-import { Injectable } from '@nestjs/common';
+import { Injectable,Res } from '@nestjs/common';
 import { LocationInputDto } from './dto/location.dto';
 import { WeatherApiService } from '../../services/weather-api.service';
 import { LocationRepository } from './location.repository';
-
+import { Location } from './entity/location.entity';
 @Injectable()
 export class LocationService {
   constructor(
@@ -23,10 +19,31 @@ export class LocationService {
         longitude,
       );
       if (isValidLatLog) {
-        const saveLocation = await this.locationRepository.saveLocation(locationData);
+        return await this.locationRepository.saveLocation(locationData);
+        
       } else {
         throw new Error('Invalid Lat Log ');
       }
     }
   }
+
+  async getLocationDetails(){
+    return await this.locationRepository.find({})
+  }
+
+  // In location.service.ts
+
+async getLocationById(locationId: string): Promise<Location> {
+  return await this.locationRepository.findOne({where:{id:locationId}});
+}
+
+async updateLocationById(locationId: string, updateData: Partial<Location>): Promise<Location> {
+ await this.locationRepository.update(locationId,updateData);
+ return await this.locationRepository.findOne({where:{id:locationId}});
+
+}
+
+async deleteLocationById(locationId: string): Promise<void> {
+ await this.locationRepository.delete(locationId)
+}
 }
