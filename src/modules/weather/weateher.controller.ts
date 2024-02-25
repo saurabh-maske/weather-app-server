@@ -1,4 +1,4 @@
-import { Controller, Get, HttpException, Param, Res } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Param, Query, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { WeatherApiService } from 'src/services/weather-api.service';
 import { LocationService } from '../locations/location.service';
@@ -69,19 +69,18 @@ export class WeateherController {
   @ApiOperation({ summary: 'Get historical data of location by locationID' })
   async getHistory(
     @Param('location_id') locationId: string,
+    @Query('days') days: number,
     @Res() res: Response,
-    @Param('days') days: number,
   ) {
     try {
       let data;
       let summary;
       if (locationId) {
         data = await this.locationService.getLocationById(locationId);
+      }
+      if(!data){
         if (!data) {
-          res.status(404).json({
-            code: 404,
-            message: 'No location details found for given locationId',
-          });
+          throw new HttpException('No data found for locationId. Please check locationId.', HttpStatus.NOT_FOUND);
         }
       }
       let dateRange = getUTCDayRange(days);
@@ -111,7 +110,7 @@ export class WeateherController {
           });
         } else {
           res.status(200).json({
-            code: 200,
+            code: 400,
             message: `History summary not found for locationId,${locationId}`,
             weatherSummary: summary ? summary : {},
           });

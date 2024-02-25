@@ -3,12 +3,10 @@ import axios from 'axios';
 import { error } from 'console';
 import { RedisService } from './redis/redis.service';
 import { ThrottlerGuard } from 'nestjs-throttler';
-import { Logger } from '@nestjs/common';
 
 
 @Injectable()
 export class WeatherApiService {
-  private readonly logger = new Logger(WeatherApiService.name);
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -23,10 +21,8 @@ export class WeatherApiService {
     }
     try {
       if (lat && lon) {
-        this.logger.log(`Fetching weather data for lat: ${lat}, lon: ${lon}`);
         const response = await axios.get(url);
         if (response.status === 200) {
-          this.logger.log(`Weather data fetched successfully for lat: ${lat}, lon: ${lon}`);
           const data = response.data;
           await this.redisService.set(cacheKey, JSON.stringify(data), 60 * 60); // Cache for  1 hour
           return data;

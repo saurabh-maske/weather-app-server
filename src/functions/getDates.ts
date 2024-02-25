@@ -1,15 +1,23 @@
-export function getUTCDayRange(days: number) {
-    var currentDate = new Date();
-    var endDate = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), currentDate.getUTCDate()));
-    var startDate = new Date(endDate);
-    startDate.setUTCDate(startDate.getUTCDate() - days);
-    if (isNaN(startDate.getTime())) {
-        console.error("Invalid start date after subtraction")
-        startDate = new Date();
-    }
+export function getUTCDayRange(days) {
+    console.log(days)
+    const endDate = new Date(); // Current date
+    const startDate = new Date(endDate.getTime() - (days * 24 * 60 * 60 * 1000));
+console.log(startDate)
+    // Format dates
+    const formattedStartDate = formatDate(startDate);
+    const formattedEndDate = formatDate(endDate);
 
     return {
-        start: startDate.toISOString().split('T')[0],
-        end: endDate.toISOString().split('T')[0]
-    }
+        start: formattedStartDate,
+        end: formattedEndDate
+    };
+}
+
+function formatDate(date) {
+    const year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    month = month < 10 ? '0' + month : month;
+    let day = date.getDate();
+    day = day < 10 ? '0' + day : day;
+    return `${year}-${month}-${day}`;
 }
